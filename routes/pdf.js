@@ -9,9 +9,7 @@ router.get('/:fileName', (req, res) => {
   console.log(fileName);
 
   const filePath = path.join(__dirname, '../storage', fileName);
-
-  // console.log( path.resolve(filePath));
-
+  
   if (fs.existsSync( filePath )) {
       // ファイルが存在する場合はストリームで送信
       const fileStream = fs.createReadStream(filePath);
