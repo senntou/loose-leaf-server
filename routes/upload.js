@@ -15,7 +15,6 @@ const storage = multer.diskStorage({
 const fileFilter = (req, file, cb) => {
     if (file.mimetype === 'application/pdf') {
         cb(null, true);
-        console.log('file uploaded')
     } else {
         cb(new Error('Only PDF files are accepted!!'))
     }
@@ -28,6 +27,7 @@ const upload = multer({
 });
 
 router.post('/', upload.single('file'), (req, res) => {
+    console.log(req.file.filename + '-' + req.body.title);
     res.status(200).send({ message: 'File uploaded successfully.' });
 });
 

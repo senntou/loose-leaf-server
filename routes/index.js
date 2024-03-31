@@ -19,7 +19,7 @@ router.get('/', function(req, res, next) {
 
         return {
             fileName: fileName,
-            fileSize: fileSizeInKilobytes.toFixed(2) + ' KB' // ファイルサイズを小数点以下2桁までの文字列に変換してKB単位で表示
+            fileSize: fileSizeInKilobytes.toFixed(2) + ' KB', // ファイルサイズを小数点以下2桁までの文字列に変換してKB単位で表示
         };
     });
 
