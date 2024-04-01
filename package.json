@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "npx nodemon ./bin/www"
+    "start": "npx nodemon ./bin/www",
+    "clean": "rimraf --glob storage/*.pdf"
   },
   "dependencies": {
     "cookie-parser": "~1.4.4",
@@ -12,6 +13,10 @@
     "express": "^4.19.2",
     "http-errors": "~1.6.3",
     "morgan": "~1.9.1",
-    "multer": "^1.4.5-lts.1"
+    "multer": "^1.4.5-lts.1",
+    "mysql2": "^3.9.3"
+  },
+  "devDependencies": {
+    "rimraf": "^5.0.5"
   }
 }

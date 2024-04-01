@@ -1,9 +1,62 @@
 const express = require('express');
 const multer = require('multer');
-const path = require('path');
+const mysql = require('mysql2');
 const fs = require('fs');
+const path = require('path');
 const router = express.Router();
 
+/**
+ * MySQLにアクセス
+ */
+
+const connection = mysql.createConnection({
+  host: 'localhost',
+  user: 'root',
+  password: 'senntou00117',
+  database: 'looseleaf'
+});
+
+connection.connect((err) => {
+  if (err) {
+		throw new Error(err.stack);
+  }
+  console.log('MySQL connection succeed');
+});
+
+function deleteNoneexistFileData(files){
+
+    existFiles = new Array();
+
+    for( const file of files ){
+        filePath = path.join(__dirname, '..' , 'storage' , file.id );
+        if( !(fs.existsSync(filePath) ) ){
+            const sql = 'DELETE FROM notes WHERE id = ?';
+            connection.query(sql, file.id, (error, results) => {
+                if(error) throw error;
+            });
+        } else {
+            existFiles.push(file);
+        }
+    }
+
+    return existFiles;
+}
+
+router.get('/', function(req, res, next) {
+
+	connection.query(
+		'SELECT * FROM notes',
+		(error, results) => {
+			// res.json({files: fileData});
+            const files = deleteNoneexistFileData(results);
+			res.render('upload',{files: files});
+		}
+	);
+});
+
+/**
+ * multerの設定
+ */
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, './storage');
@@ -28,35 +81,20 @@ const upload = multer({
     fileFilter,
 });
 
-router.get('/', function(req, res, next) {
-
-  directoryPath = path.join(__dirname, '../storage');
-  const fileNames = fs.readdirSync('./storage');
-  let fileData;
-  try {
-    fileData = fileNames.map((fileName) => {
-        const filePath = path.join(directoryPath, fileName);
-        const stats = fs.statSync(filePath);
-        const fileSizeInBytes = stats.size;
-        const fileSizeInKilobytes = fileSizeInBytes / 1024; // バイトからキロバイトに変換
-
-        return {
-            fileName: fileName,
-            fileSize: fileSizeInKilobytes.toFixed(2) + ' KB', // ファイルサイズを小数点以下2桁までの文字列に変換してKB単位で表示
-        };
-    });
-
-  } catch (error) {
-      console.error('Error reading directory:', error);
-  }
-  
-	// res.json({files: fileData});
-	res.render('upload',{files: fileData});
-});
-
 router.post('/', upload.single('file'), (req, res) => {
-    console.log(req.file.filename + '-' + req.body.title);
-    res.status(200).send({ message: 'File uploaded successfully.' });
+		console.log(req.file.filename + '-' + req.body.title);
+		res.status(200).send({ message: 'File uploaded successfully.' });
+
+		const query = 'INSERT INTO notes( ?? , ?? ) VALUES( ? , ? )';
+		const data = [ 'id' , 'comment', req.file.filename, req.body.title ];
+
+		connection.query(
+			query,
+			data,
+			(error, results) => {
+				if(error) throw error;
+			}
+		);
 });
 
 module.exports = router;

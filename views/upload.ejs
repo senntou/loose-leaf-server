@@ -20,10 +20,10 @@
         <h1>ファイル閲覧</h1>
         <% for (var file of files) { %>
             <div>
-                <% if(file.fileName !== '.gitkeep') { %>
-                    <h4><%= file.fileName %></h4>
-                    <p><%= file.fileSize %></p>
-                    <button onclick="location.href='../pdf/<%= file.fileName %>'">閲覧</button>
+                <% if(file.id !== '.gitkeep') { %>
+                    <h4><%= file.id %></h4>
+                    <p> <%= file.comment %> </p>
+                    <button onclick="location.href='../pdf/<%= file.id %>'">閲覧</button>
                 <% } %>
             </div>
         <% } %>
