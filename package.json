@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "npx nodemon ./bin/www",
-    "clean": "rimraf --glob storage/*.pdf"
+    "clean": "rimraf --glob storage/*.pdf",
     "format" : "prettier --write **/*.js"
   },
   "dependencies": {
@@ -18,7 +18,7 @@
     "mysql2": "^3.9.3"
   },
   "devDependencies": {
-    "rimraf": "^5.0.5"
+    "rimraf": "^5.0.5",
     "prettier": "^3.2.5"
   }
 }
