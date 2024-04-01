@@ -1,0 +1,33 @@
+
+<!DOCTYPE html>
+<html lang="ja"></html>
+<head>
+    <meta charset="UTF-8">
+    <title>Express.js File Upload</title>
+</head>
+<body>
+
+    <div>
+        <h1>ファイルアップロード</h1>
+        <form action="/upload" method="POST" enctype="multipart/form-data">
+            <input type="file" name="file">
+            <input type="text" name="title">
+            <button type="submit">送信</button>
+        </form>
+    </div>
+
+    <div>
+        <h1>ファイル閲覧</h1>
+        <% for (var file of files) { %>
+            <div>
+                <% if(file.id !== '.gitkeep') { %>
+                    <h4><%= file.id %></h4>
+                    <p> <%= file.comment %> </p>
+                    <button onclick="location.href='../pdf/<%= file.id %>'">閲覧</button>
+                <% } %>
+            </div>
+        <% } %>
+    </div>
+     
+</body>
+</html>
