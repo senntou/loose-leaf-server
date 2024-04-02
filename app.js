@@ -3,13 +3,15 @@ const express = require("express");
 const path = require("path");
 const cookieParser = require("cookie-parser");
 const logger = require("morgan");
-
-const fs = require("fs");
+var passport = require("passport");
+var session = require("express-session");
+const MySQLStore = require("express-mysql-session")(session);
 
 const indexRouter = require("./routes/index");
-const usersRouter = require("./routes/users");
 const uploadRouter = require("./routes/upload");
 const pdfRouter = require("./routes/pdf");
+const authRouter = require("./routes/auth").router;
+const signupRouter = require("./routes/signup");
 
 const app = express();
 
@@ -23,10 +25,31 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
+/**
+ * session
+ */
+const mysqlOptions = {
+  host: "localhost",
+  port: 3306,
+  user: "root",
+  password: process.env.SQLPass,
+  database: "looseleaf",
+};
+app.use(
+  session({
+    secret: "TODO setting secret",
+    resave: false,
+    saveUninitialized: false,
+    store: new MySQLStore(mysqlOptions),
+  }),
+);
+app.use(passport.session());
+
 app.use("/", indexRouter);
-app.use("/users", usersRouter);
 app.use("/upload", uploadRouter);
 app.use("/pdf", pdfRouter);
+app.use("/login", authRouter);
+app.use("/signup", signupRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
@@ -36,7 +59,7 @@ app.use(function (req, res, next) {
 // error handler
 app.use(function (err, req, res, next) {
   // set locals, only providing error in development
-	res.locals.message = err.message;
+  res.locals.message = err.message;
   res.locals.error = req.app.get("env") === "development" ? err : {};
 
   // render the error page
