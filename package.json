@@ -5,7 +5,10 @@
   "scripts": {
     "start": "npx nodemon ./bin/www",
     "clean": "rimraf --glob storage/*.pdf",
-    "format": "prettier --write **/*.js"
+    "format": "prettier --write **/*.js",
+    "db-create": "npx db-migrate db:create looseleaf -e init",
+    "db-drop": "npx db-migrate db:drop looseleaf",
+    "db-migrate": "npx db-migrate up"
   },
   "dependencies": {
     "cookie-parser": "~1.4.4",
