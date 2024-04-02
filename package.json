@@ -6,7 +6,7 @@
     "start": "npx nodemon ./bin/www",
     "clean": "rimraf --glob storage/*.pdf",
     "format": "prettier --write **/*.js",
-    "db-create": "npx db-migrate db:create looseleaf -e init",
+    "db-create": "npx db-migrate db:create looseleaf -e init && npx db-migrate up",
     "db-drop": "npx db-migrate db:drop looseleaf",
     "db-migrate": "npx db-migrate up"
   },
@@ -17,10 +17,14 @@
     "debug": "~2.6.9",
     "ejs": "^3.1.9",
     "express": "^4.19.2",
+    "express-mysql-session": "^3.0.0",
+    "express-session": "^1.18.0",
     "http-errors": "~1.6.3",
     "morgan": "~1.9.1",
     "multer": "^1.4.5-lts.1",
-    "mysql2": "^3.9.3"
+    "mysql2": "^3.9.3",
+    "passport": "^0.7.0",
+    "passport-local": "^1.0.0"
   },
   "devDependencies": {
     "prettier": "^3.2.5",
