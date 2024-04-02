@@ -12,11 +12,12 @@ const router = express.Router();
 const connection = mysql.createConnection({
   host: 'localhost',
   user: 'root',
-  password: 'senntou00117',
+  password: process.env.SQLPass,
   database: 'looseleaf'
 });
 
 connection.connect((err) => {
+	console.log(process.env);
   if (err) {
 		throw new Error(err.stack);
   }
