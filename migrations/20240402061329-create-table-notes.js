@@ -17,7 +17,7 @@ exports.setup = function(options, seedLink) {
 exports.up = function(db) {
   return db.createTable('notes', {
     id: { type: 'string', primaryKey: true , length:255},
-    name: 'string'
+    comment: 'string'
   });
 };
 
