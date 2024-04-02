@@ -17,14 +17,14 @@ router.post("/", function (req, res, next) {
           return next(err);
         }
         const sql =
-          "INSERT INTO users (name, hashedPassword, salt) VALUES (?, ?, ?)";
-        const data = [req.body.username, hashedPassword, salt];
+          "INSERT INTO users (id, hashedPassword, salt) VALUES (?, ?, ?)";
+        const data = [req.body.id, hashedPassword, salt];
         connection.query(sql, data, (err) => {
           if (err) {
             return next(err);
           }
           var user = {
-            name: req.body.username,
+            id: req.body.userid,
           };
           req.login(user, (err) => {
             if (err) {

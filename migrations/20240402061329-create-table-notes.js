@@ -18,12 +18,13 @@ exports.up = function (db) {
   return db
     .createTable("notes", {
       id: { type: "string", primaryKey: true, length: 255 },
+      title: 'string',
       comment: "string",
     })
     .then(
       function (result) {
         db.createTable("users", {
-          name: { type: "string", primaryKey: true, length: 255 },
+          id: { type: "string", primaryKey: true, length: 255 },
           introduction: { type: "string" },
           salt: { type: "blob" },
           hashedPassword: { type: "blob"},

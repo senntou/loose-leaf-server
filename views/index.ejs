@@ -12,6 +12,18 @@
         <button onclick="location.href='./upload/'">アップロード</button>
         <button onclick="location.href='./login/'">ログイン</button>
 
+        <hr>
+        <h1>ユーザー一覧</h1>
+        <% for (var user of users) { %>
+            <div>
+                <h4><%= user.id %></h4>
+                <p> <%= user.introduction %> </p>
+                <p> <%= user.hashedPassword%> </p>
+                <p> <%= user.salt %> </p>
+            </div>
+        <% } %>
+    </div>
+
     </div>
      
 </body>

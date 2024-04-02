@@ -41,14 +41,6 @@ function deleteNoneexistFileData(files) {
   return existFiles;
 }
 
-router.get("/", function (req, res, next) {
-  connection.query("SELECT * FROM notes", (error, results) => {
-    // res.json({files: fileData});
-    const files = deleteNoneexistFileData(results);
-    res.render("upload", { files: files });
-  });
-});
-
 /**
  * multerの設定
  */
@@ -76,12 +68,23 @@ const upload = multer({
   fileFilter,
 });
 
+/**
+ * ルーティング
+ */
+router.get("/", function (req, res, next) {
+  connection.query("SELECT * FROM notes", (error, results) => {
+    const files = deleteNoneexistFileData(results);
+    // res.json({files: files});
+
+    const name = (req.user === undefined) ? {id:'ログインしていません'} : req.user;
+    res.render("upload", { files: files , user: name});
+  });
+});
 router.post("/", upload.single("file"), (req, res) => {
-  console.log(req.file.filename + "-" + req.body.title);
   res.status(200).send({ message: "File uploaded successfully." });
 
-  const query = "INSERT INTO notes( ?? , ?? ) VALUES( ? , ? )";
-  const data = ["id", "comment", req.file.filename, req.body.title];
+  const query = "INSERT INTO notes( ?? , ?? , ??) VALUES( ? , ? , ?)";
+  const data = ["id","title", "comment", req.file.filename, req.body.title, req.body.comment];
 
   connection.query(query, data, (error, results) => {
     if (error) throw error;

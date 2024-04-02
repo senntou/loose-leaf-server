@@ -26,11 +26,10 @@ connection.connect((err) => {
  * passportによるログイン判定
  */
 passport.use(
-  new LocalStrategy(function verify(username, password, cb) {
+  new LocalStrategy(function verify(id, password, cb) {
 
-
-    sql = "SELECT * FROM users WHERE name = ?";
-    connection.query(sql, [username], (error, results) => {
+    sql = "SELECT * FROM users WHERE id = ?";
+    connection.query(sql, [id], (error, results) => {
       if (error) {
         console.log("error : passport.use()");
         throw error;
@@ -38,7 +37,7 @@ passport.use(
 
       if (results.length === 0) {
 				console.log("no result");
-        return cb(null, false, { message: "Incorrect username or password." });
+        return cb(null, false, { message: "Incorrect userID or password." });
       }
 
 			const user = results[0];
@@ -55,7 +54,7 @@ passport.use(
           }
           if (!crypto.timingSafeEqual(user.hashedPassword, hashedPassword)) {
             return cb(null, false, {
-              message: "Incorrect username or password.",
+              message: "Incorrect userID or password.",
             });
           }
           return cb(null, user);
@@ -68,13 +67,12 @@ passport.use(
 /**
  * シリアライズ（クッキーにどの情報を残すか）
  * serialize: 認証成功時、クッキーに情報を残す
- * deserialize: リクエスト時、ミドルウェアとしてreq.userに情報を追加する
+ * deserialize: リクエスト時、ミドルウェアとして（？）req.userに情報を追加する
  */
 passport.serializeUser(function (user, cb) {
   process.nextTick(() => {
     cb(null, {
-      name: user.name,
-      // introduction: user.introduction,
+      id: user.id,
     });
   });
 });
@@ -93,6 +91,10 @@ router.get("/", (res, req) => {
 });
 router.post(
   "/",
+	(req, res, next) => {
+		req.body.username = req.body.id;
+		next();
+	},
   passport.authenticate("local", {
     successRedirect: "/",
     failureRedirect: "/login",

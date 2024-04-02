@@ -12,21 +12,27 @@
         <form action="/upload" method="POST" enctype="multipart/form-data">
             <input type="file" name="file">
             <input type="text" name="title">
+            <input type="text" name="comment">
             <button type="submit">送信</button>
         </form>
     </div>
-
+    <hr>
     <div>
         <h1>ファイル閲覧</h1>
         <% for (var file of files) { %>
             <div>
                 <% if(file.id !== '.gitkeep') { %>
-                    <h4><%= file.id %></h4>
+                    <h4><%= file.title %></h4>
                     <p> <%= file.comment %> </p>
                     <button onclick="location.href='../pdf/<%= file.id %>'">閲覧</button>
                 <% } %>
             </div>
         <% } %>
+    </div>
+    <hr>
+    <div>
+        <h1>ログイン状況</h1>
+        <p><%= user.id %><p> 
     </div>
      
 </body>
