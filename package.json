@@ -5,10 +5,15 @@
   "scripts": {
     "start": "npx nodemon ./bin/www",
     "clean": "rimraf --glob storage/*.pdf",
-    "format" : "prettier --write **/*.js"
+    "format": "prettier --write **/*.js",
+    "db-create": "npx db-migrate db:create looseleaf -e init",
+    "db-drop": "npx db-migrate db:drop looseleaf",
+    "db-migrate": "npx db-migrate up"
   },
   "dependencies": {
     "cookie-parser": "~1.4.4",
+    "db-migrate": "^0.11.14",
+    "db-migrate-mysql": "^2.3.2",
     "debug": "~2.6.9",
     "ejs": "^3.1.9",
     "express": "^4.19.2",
@@ -18,7 +23,7 @@
     "mysql2": "^3.9.3"
   },
   "devDependencies": {
-    "rimraf": "^5.0.5",
-    "prettier": "^3.2.5"
+    "prettier": "^3.2.5",
+    "rimraf": "^5.0.5"
   }
 }

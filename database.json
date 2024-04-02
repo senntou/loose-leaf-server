@@ -1,0 +1,13 @@
+{
+    "init": {
+      "driver": "mysql",
+      "user": "root",
+      "password": {"ENV":"SQLPass"}
+    },
+    "dev": {
+      "driver": "mysql",
+      "user": "root",
+      "password": {"ENV":"SQLPass"},
+      "database": "looseleaf"
+    }
+  }
