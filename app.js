@@ -3,8 +3,9 @@ const express = require("express");
 const path = require("path");
 const cookieParser = require("cookie-parser");
 const logger = require("morgan");
-var passport = require("passport");
-var session = require("express-session");
+const passport = require("passport");
+const session = require("express-session");
+const cors = require('cors');
 const MySQLStore = require("express-mysql-session")(session);
 
 const indexRouter = require("./routes/index");
@@ -12,6 +13,7 @@ const uploadRouter = require("./routes/upload");
 const pdfRouter = require("./routes/pdf");
 const authRouter = require("./routes/auth").router;
 const signupRouter = require("./routes/signup");
+const apiRouter = require("./routes/api").router;
 
 const app = express();
 
@@ -24,6 +26,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
+app.use(cors());
 
 /**
  * session
@@ -50,6 +53,7 @@ app.use("/upload", uploadRouter);
 app.use("/pdf", pdfRouter);
 app.use("/login", authRouter);
 app.use("/signup", signupRouter);
+app.use("/api", apiRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

@@ -5,26 +5,12 @@ const fs = require("fs");
 const path = require("path");
 const router = express.Router();
 
-/**
- * MySQLにアクセス
- */
+const connection = require('./api').notesConnection;
 
-const connection = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: process.env.SQLPass,
-  database: "looseleaf",
-});
-
-connection.connect((err) => {
-  if (err) {
-    throw new Error(err.stack);
-  }
-  console.log("MySQL connection succeed");
-});
-
-function deleteNoneexistFileData(files) {
+function deleteNoneExistFileData(files) {
   existFiles = new Array();
+
+  if(files === null || files === undefined) return existFiles;
 
   for (const file of files) {
     filePath = path.join(__dirname, "..", "storage", file.id);
@@ -73,7 +59,7 @@ const upload = multer({
  */
 router.get("/", function (req, res, next) {
   connection.query("SELECT * FROM notes", (error, results) => {
-    const files = deleteNoneexistFileData(results);
+    const files = deleteNoneExistFileData(results);
     // res.json({files: files});
 
     const name = (req.user === undefined) ? {id:'ログインしていません'} : req.user;
