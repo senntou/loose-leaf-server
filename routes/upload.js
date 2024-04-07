@@ -66,9 +66,13 @@ router.get("/", function (req, res, next) {
     res.render("upload", { files: files , user: name});
   });
 });
-router.post("/", upload.single("file"), (req, res) => {
-  res.status(200).send({ message: "File uploaded successfully." });
+router.post("/", upload.single("file"), (req, res, next) => {
 
+  if(req.user === undefined){
+    throw new Error('Please login to post file.');
+  }
+
+  res.status(200).send({ message: "File uploaded successfully." });
   const query = "INSERT INTO notes( ?? , ?? , ??) VALUES( ? , ? , ?)";
   const data = ["id","title", "comment", req.file.filename, req.body.title, req.body.comment];
 
