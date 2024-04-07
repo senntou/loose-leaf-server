@@ -8,7 +8,6 @@ const router = express.Router();
 /**
  * MySQLにアクセス
  */
-
 const connection = mysql.createConnection({
     host: "localhost",
     user: "root",
@@ -22,7 +21,6 @@ const connection = mysql.createConnection({
     }
     console.log("MySQL connection succeed");
   });
-
 function deleteNoneexistFileData(files) {
   existFiles = new Array();
 
@@ -53,7 +51,6 @@ const storage = multer.diskStorage({
     cb(null, uniqueSuffix + ".pdf");
   },
 });
-
 const fileFilter = (req, file, cb) => {
   if (file.mimetype === "application/pdf") {
     cb(null, true);
@@ -61,7 +58,6 @@ const fileFilter = (req, file, cb) => {
     cb(new Error("Only PDF files are accepted!!"));
   }
 };
-
 const upload = multer({
   storage: storage,
   limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
@@ -71,11 +67,32 @@ const upload = multer({
 /**
  * ルーティング
  */
-router.get("/", function (req, res, next) {
-  connection.query("SELECT * FROM notes", (error, results) => {
-    const files = deleteNoneexistFileData(results);
-    res.json({files: files});
-  });
+router.get("/", (req, res, next) => {
+
+  if(req.query.fileName === undefined && req.query.fileId === undefined){ 
+    connection.query("SELECT * FROM notes", (error, results) => {
+      const files = deleteNoneexistFileData(results);
+      res.json({files: files});
+    });
+  } 
+  else if(req.query.fileName !== undefined){
+    const fileName = '%' + req.query.fileName + '%'; 
+    const sql = "SELECT * FROM ?? WHERE ?? LIKE ?";
+    const data = ['notes', 'title', fileName];
+    connection.query(sql, data, (error, results) => {
+      const files = deleteNoneexistFileData(results);
+      res.json({files: files});
+    });
+  }
+  else if(req.query.fileId !== undefined){
+    const fileId = req.query.fileId; 
+    const sql = "SELECT * FROM ?? WHERE ?? LIKE ?";
+    const data = ['notes', 'id', fileId];
+    connection.query(sql, data, (error, results) => {
+      const files = deleteNoneexistFileData(results);
+      res.json({files: files});
+    });
+  }
 });
 router.post("/", upload.single("file"), (req, res) => {
   res.status(200).send({ message: "File uploaded successfully." });
