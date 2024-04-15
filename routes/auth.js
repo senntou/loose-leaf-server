@@ -97,9 +97,7 @@ router.get("/session", (req,res) => {
     res.json({});
   }
 });
-router.post(
-  "/login",
-	(req, res, next) => {
+router.post("/login", (req, res, next) => {
     // console.log("req.body is below");
     console.log(req);
 		req.body.username = req.body.id;
@@ -116,9 +114,41 @@ router.post("/logout", (req,res,next) => {
     res.redirect("/");
   });
 });
+router.post("/signup", function (req, res, next) {
+  var salt = crypto.randomBytes(16);
+  crypto.pbkdf2(
+    req.body.password,
+    salt,
+    310000,
+    32,
+    "sha256",
+    (err, hashedPassword) => {
+      if (err) {
+        return next(err);
+      }
+      const sql = "INSERT INTO users (id, hashedPassword, salt) VALUES (?, ?, ?)";
+      const data = [req.body.id, hashedPassword, salt];
+      connection.query(sql, data, (err) => {
+        if (err) {
+          return next(err);
+        }
+        var user = {
+          id: req.body.id,
+        };
+        console.log(1);
+        req.login(user, (err) => {
+          if (err) {
+            return next(err);
+          }
+          console.log(2);
+          res.status(200).send("Sign up sucsessed");
+        });
+      });
+    },
+  );
+});
 
 module.exports = {
-	router: router,
-	usersConnection: connection
+	router: router
 };
 

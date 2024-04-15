@@ -12,7 +12,6 @@ const indexRouter = require("./routes/index");
 const uploadRouter = require("./routes/upload");
 const pdfRouter = require("./routes/pdf");
 const authRouter = require("./routes/auth").router;
-const signupRouter = require("./routes/signup");
 const apiRouter = require("./routes/api");
 
 const app = express();
@@ -55,7 +54,6 @@ app.use("/", indexRouter);
 app.use("/upload", uploadRouter);
 app.use("/pdf", pdfRouter);
 app.use("/auth", authRouter);
-app.use("/signup", signupRouter);
 app.use("/api", apiRouter);
 
 // catch 404 and forward to error handler
