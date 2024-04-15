@@ -86,20 +86,36 @@ passport.deserializeUser(function (user, cb) {
 /**
  * ルーティング
  */
-router.get("/", (res, req) => {
-  req.render("login");
+router.get("/login", (req,res) => {
+  res.render("login");
+});
+router.get("/session", (req,res) => {
+  if(req.user !== undefined){
+    res.json({id: req.user.id});
+  }
+  else {
+    res.json({});
+  }
 });
 router.post(
-  "/",
+  "/login",
 	(req, res, next) => {
+    // console.log("req.body is below");
+    console.log(req);
 		req.body.username = req.body.id;
 		next();
 	},
-  passport.authenticate("local", {
-    successRedirect: "/",
-    failureRedirect: "/login",
-  }),
+  passport.authenticate("local"),
+  (req,res) => {
+    res.redirect("/");
+  }
 );
+router.post("/logout", (req,res,next) => {
+  req.logout( (err) => {
+    if(err) return next(err);
+    res.redirect("/");
+  });
+});
 
 module.exports = {
 	router: router,

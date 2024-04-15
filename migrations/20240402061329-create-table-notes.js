@@ -20,6 +20,7 @@ exports.up = function (db) {
       id: { type: "string", primaryKey: true, length: 255 },
       title: 'string',
       comment: "string",
+      author: "string",
     })
     .then(
       function (result) {
