@@ -9,18 +9,17 @@ const router = express.Router();
  * MySQLにアクセス
  */
 const connection = mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: process.env.SQLPass,
-    database: "looseleaf",
-  });
-  
-  connection.connect((err) => {
-    if (err) {
-      throw new Error(err.stack);
-    }
-    console.log("MySQL connection succeed");
-  });
+  host: "localhost",
+  user: "root",
+  password: process.env.SQLPass,
+  database: "looseleaf",
+});
+connection.connect((err) => {
+  if (err) {
+    throw new Error(err.stack);
+  }
+  console.log("MySQL connection succeed");
+});
 function deleteNoneexistFileData(files) {
   existFiles = new Array();
 
@@ -94,15 +93,30 @@ router.get("/", (req, res, next) => {
     });
   }
 });
-router.post("/", upload.single("file"), (req, res) => {
-  res.status(200).send({ message: "File uploaded successfully." });
+router.post("/",
+  (req,res,next)=>{
+    if(req.user === undefined){
+      res.status(400).send({error:"You must login to post file."});
+      return ;
+    }
+    next();
+  } ,
+  upload.single("file"),
+  (req, res, next) => {
+    if(!req.body.title || req.body.title === ""){
+      res.status(400).send({error:'"Title" must not be empty.'});
+      return ;
+    }
+    res.status(200).send({ message: "File uploaded successfully." });
 
-  const query = "INSERT INTO notes( ?? , ?? , ??) VALUES( ? , ? , ?)";
-  const data = ["id","title", "comment", req.file.filename, req.body.title, req.body.comment];
+    console.log(req.user);
+    const query = "INSERT INTO notes( ?? , ?? , ?? , ??) VALUES( ? , ? , ? , ?)";
+    const data = ["id","title", "comment", "author", req.file.filename, req.body.title, req.body.comment, req.user.id];
 
-  connection.query(query, data, (error, results) => {
-    if (error) throw error;
-  });
-});
+    connection.query(query, data, (error, results) => {
+      if (error) throw error;
+    });
+  }
+);
 
-module.exports = {router , notesConnection : connection};
+module.exports = router;

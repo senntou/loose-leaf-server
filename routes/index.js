@@ -1,10 +1,24 @@
 const express = require("express");
 const router = express.Router();
+const mysql = require("mysql2");
+
 
 /**
- * for debug 
+ * MySQLにアクセス
  */
-const connection = require('./auth').usersConnection;
+const connection = mysql.createConnection({
+  host: "localhost",
+  user: "root",
+  password: process.env.SQLPass,
+  database: "looseleaf",
+});
+connection.connect((err) => {
+  if (err) {
+    throw new Error(err.stack);
+  }
+  console.log("MySQL connection(auth) succeed ");
+});
+
 
 /* GET home page. */
 router.get("/", function (req, res, next) {

@@ -5,7 +5,18 @@ const fs = require("fs");
 const path = require("path");
 const router = express.Router();
 
-const connection = require('./api').notesConnection;
+const connection = mysql.createConnection({
+  host: "localhost",
+  user: "root",
+  password: process.env.SQLPass,
+  database: "looseleaf",
+});
+connection.connect((err) => {
+  if (err) {
+    throw new Error(err.stack);
+  }
+  console.log("MySQL connection succeed");
+});
 
 function deleteNoneExistFileData(files) {
   existFiles = new Array();
@@ -66,19 +77,4 @@ router.get("/", function (req, res, next) {
     res.render("upload", { files: files , user: name});
   });
 });
-router.post("/", upload.single("file"), (req, res, next) => {
-
-  if(req.user === undefined){
-    throw new Error('Please login to post file.');
-  }
-
-  res.status(200).send({ message: "File uploaded successfully." });
-  const query = "INSERT INTO notes( ?? , ?? , ??) VALUES( ? , ? , ?)";
-  const data = ["id","title", "comment", req.file.filename, req.body.title, req.body.comment];
-
-  connection.query(query, data, (error, results) => {
-    if (error) throw error;
-  });
-});
-
 module.exports = router;
