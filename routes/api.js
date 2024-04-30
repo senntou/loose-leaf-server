@@ -67,14 +67,10 @@ const upload = multer({
  * ルーティング
  */
 router.get("/", (req, res, next) => {
-
-  if(req.query.fileName === undefined && req.query.fileId === undefined){ 
-    connection.query("SELECT * FROM notes", (error, results) => {
-      const files = deleteNoneexistFileData(results);
-      res.json({files: files});
-    });
-  } 
-  else if(req.query.fileName !== undefined){
+  /**
+   * ファイルネーム部分一致検索
+   */
+  if(req.query.fileName !== undefined){
     const fileName = '%' + req.query.fileName + '%'; 
     const sql = "SELECT * FROM ?? WHERE ?? LIKE ?";
     const data = ['notes', 'title', fileName];
@@ -83,15 +79,39 @@ router.get("/", (req, res, next) => {
       res.json({files: files});
     });
   }
+  /**
+   * ファイルID完全一致検索
+   */
   else if(req.query.fileId !== undefined){
     const fileId = req.query.fileId; 
-    const sql = "SELECT * FROM ?? WHERE ?? LIKE ?";
+    const sql = "SELECT * FROM ?? WHERE ?? = ?";
     const data = ['notes', 'id', fileId];
     connection.query(sql, data, (error, results) => {
       const files = deleteNoneexistFileData(results);
       res.json({files: files});
     });
   }
+  /**
+   * author完全一致検索
+   */
+  else if(req.query.author !== undefined){
+    const author = req.query.author; 
+    const sql = "SELECT * FROM ?? WHERE ?? = ?";
+    const data = ['notes', 'author', author];
+    connection.query(sql, data, (error, results) => {
+      const files = deleteNoneexistFileData(results);
+      res.json({files: files});
+    });
+  }
+  /**
+   * デフォルト （すべて表示）
+   */
+  else { 
+    connection.query("SELECT * FROM notes", (error, results) => {
+      const files = deleteNoneexistFileData(results);
+      res.json({files: files});
+    });
+  } 
 });
 router.post("/",
   (req,res,next)=>{
@@ -118,5 +138,51 @@ router.post("/",
     });
   }
 );
+router.post("/edit", (req,res,next) => {
+  if(req.user === undefined){
+    res.status(400).send({error:"You must login to post file."});
+    return ;
+  }
+  if(!req.body.fileId || !req.body.title){
+    res.status(400).send({error:"fileId or title is empty"});
+    return ;
+  }
 
+  const fileId = req.body.fileId;
+  const title = req.body.title;
+  const comment = req.body.comment;
+  const query = "UPDATE notes SET title = ? , comment = ? where id = ? AND author = ?";
+  const data = [title, comment, fileId, req.user.id];
+
+  connection.query(query, data, (error, results) => {
+    if(error) {
+      res.status(400).send({error: "ファイル編集に失敗"});
+      return ;
+    }
+    res.status(200).send({ message: "File updated successfully." });
+  });
+});
+router.delete("/", (req,res,next) => {
+  if(req.user === undefined){
+    res.status(400).send({error:"You must login to post file."});
+    return ;
+  }
+  if(req.query.fileId === undefined){
+    res.status(400).send({error:"fileId is empty"});
+    return ;
+  }
+
+  const query = "DELETE FROM notes WHERE id = ? AND author = ?";
+  const data = [req.query.fileId, req.user.id];
+
+  connection.query(query, data, (error, results) => {
+    if(error) {
+      res.status(400).send({error: "ファイル削除に失敗"});
+      return ;
+    }
+
+    res.status(200).send({ message: "File deleted successfully." });
+  });
+
+});
 module.exports = router;
