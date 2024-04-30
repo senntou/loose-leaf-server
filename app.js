@@ -11,7 +11,7 @@ const MySQLStore = require("express-mysql-session")(session);
 const indexRouter = require("./routes/index");
 const uploadRouter = require("./routes/upload");
 const pdfRouter = require("./routes/pdf");
-const authRouter = require("./routes/auth").router;
+const authRouter = require("./routes/auth");
 const apiRouter = require("./routes/api");
 
 const app = express();
