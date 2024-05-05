@@ -1,5 +1,5 @@
 const express = require("express");
-const mysql = require("mysql2");
+const mysql = require("mysql2/promise");
 const router = express.Router();
 const path = require("path");
 var passport = require("passport");
@@ -9,39 +9,31 @@ var crypto = require("crypto");
 /**
  * MySQLにアクセス
  */
-const connection = mysql.createConnection({
+const db_options = {
   host: "localhost",
   user: "root",
   password: process.env.SQLPass,
   database: "looseleaf",
-});
-connection.connect((err) => {
-  if (err) {
-    throw new Error(err.stack);
-  }
-  console.log("MySQL connection(auth) succeed ");
-});
+}
+const pool = mysql.createPool(db_options);
 
 /**
  * passportによるログイン判定
  */
 passport.use(
-  new LocalStrategy(function verify(id, password, cb) {
+  new LocalStrategy(async function verify(id, password, cb) {
 
     sql = "SELECT * FROM users WHERE id = ?";
-    connection.query(sql, [id], (error, results) => {
-      if (error) {
-        console.log("error : passport.use()");
-        throw error;
-      }
 
+    try{
+      const [results, fields] = await pool.query(sql, [id]);
       if (results.length === 0) {
-				console.log("no result");
+        // console.log("no result");
         return cb(null, false, { message: "Incorrect userID or password." });
       }
-
-			const user = results[0];
-			
+  
+      const user = results[0];
+      
       crypto.pbkdf2(
         password,
         user.salt,
@@ -60,7 +52,10 @@ passport.use(
           return cb(null, user);
         },
       );
-    });
+    } catch (err){
+      console.log("error : passport.use()");
+      throw err;
+    }
   }),
 );
 
@@ -99,7 +94,7 @@ router.get("/session", (req,res) => {
 });
 router.post("/login", (req, res, next) => {
     // console.log("req.body is below");
-    console.log(req);
+    // console.log(req);
 		req.body.username = req.body.id;
 		next();
 	},
@@ -115,29 +110,22 @@ router.post("/logout", (req,res,next) => {
   });
 });
 router.post("/signup",
-  (req,res,next) => {
-    console.log(1);
+  async (req,res,next) => {
     // IDの衝突が発生するか確認
-    connection.query("SELECT * FROM users WHERE id LIKE ?", req.body.id, (err,results) => {
-      if(err) return next(err);
-
-      console.log(2);
-
+    try{
+      const [results, fields] = await pool.query("SELECT * FROM users WHERE id LIKE ?", req.body.id);
       if(results.length >= 1){
         res.status(400).send({error:'This id is already used by another user'});
-
-        console.log(3);
-
         return ;
-      } else {
+      } 
+      else {
         next();
       }
-    });
+    } catch(err) {
+      return next(err);
+    }
   }, 
   (req, res, next) => {
-
-    console.log(4);
-
     var salt = crypto.randomBytes(16);
     crypto.pbkdf2(
       req.body.password,
@@ -145,25 +133,26 @@ router.post("/signup",
       310000,
       32,
       "sha256",
-      (err, hashedPassword) => {
+      async (err, hashedPassword) => {
         if (err) {
           return next(err);
         }
         const sql = "INSERT INTO users (id, hashedPassword, salt) VALUES (?, ?, ?)";
         const data = [req.body.id, hashedPassword, salt];
-        connection.query(sql, data, (err) => {
+
+        try{
+          await pool.query(sql,data);
+        } catch(err){
+          return next(err);
+        }
+        var user = {
+          id: req.body.id,
+        };
+        req.login(user, (err) => {
           if (err) {
             return next(err);
           }
-          var user = {
-            id: req.body.id,
-          };
-          req.login(user, (err) => {
-            if (err) {
-              return next(err);
-            }
-            res.status(200).send("Sign up sucsessed");
-          });
+          res.status(200).send("Sign up sucsessed");
         });
       },
     );
