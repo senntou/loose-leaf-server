@@ -1,6 +1,6 @@
 const express = require("express");
 const multer = require("multer");
-const mysql = require("mysql2");
+const mysql = require("mysql2/promise");
 const fs = require("fs");
 const path = require("path");
 const router = express.Router();
@@ -8,32 +8,42 @@ const router = express.Router();
 /**
  * MySQLにアクセス
  */
-const connection = mysql.createConnection({
+const db_options = {
   host: "localhost",
   user: "root",
   password: process.env.SQLPass,
   database: "looseleaf",
-});
-connection.connect((err) => {
-  if (err) {
-    throw new Error(err.stack);
-  }
-  console.log("MySQL connection succeed");
-});
-function deleteNoneexistFileData(files) {
+}
+const pool = mysql.createPool(db_options);
+/**
+ * file実体が存在しないDBの要素を削除する
+ */
+async function deleteNoneexistFileData(files) {
+
+
   existFiles = new Array();
 
-  for (const file of files) {
-    filePath = path.join(__dirname, "..", "storage", file.id);
-    if (!fs.existsSync(filePath)) {
-      const sql = "DELETE FROM notes WHERE id = ?";
-      connection.query(sql, file.id, (error, results) => {
-        if (error) throw error;
-      });
-    } else {
-      existFiles.push(file);
+  try{
+    const connection = await pool.getConnection();
+
+
+    for (const file of files) {
+      filePath = path.join(__dirname, "..", "storage", file.id);
+      if (!fs.existsSync(filePath)) {
+        const sql = "DELETE FROM notes WHERE id = ?";
+        connection.query(sql, file.id);
+      } else {
+        existFiles.push(file);
+      }
     }
+
+    pool.releaseConnection(connection);
   }
+  catch(err){
+    console.log("error: getting connection error");
+    throw err;
+  }
+
 
   return existFiles;
 }
@@ -66,7 +76,7 @@ const upload = multer({
 /**
  * ルーティング
  */
-router.get("/", (req, res, next) => {
+router.get("/", async (req, res, next) => {
   /**
    * ファイルネーム部分一致検索
    */
@@ -74,10 +84,14 @@ router.get("/", (req, res, next) => {
     const fileName = '%' + req.query.fileName + '%'; 
     const sql = "SELECT * FROM ?? WHERE ?? LIKE ?";
     const data = ['notes', 'title', fileName];
-    connection.query(sql, data, (error, results) => {
-      const files = deleteNoneexistFileData(results);
+    try{
+      const [results, fields] = await pool.query(sql, data);
+      const files = await deleteNoneexistFileData(results);
       res.json({files: files});
-    });
+    }
+    catch(err){
+      throw err;
+    }
   }
   /**
    * ファイルID完全一致検索
@@ -86,10 +100,14 @@ router.get("/", (req, res, next) => {
     const fileId = req.query.fileId; 
     const sql = "SELECT * FROM ?? WHERE ?? = ?";
     const data = ['notes', 'id', fileId];
-    connection.query(sql, data, (error, results) => {
-      const files = deleteNoneexistFileData(results);
+    try{
+      const [results, fields] = await pool.query(sql, data);
+      const files = await deleteNoneexistFileData(results);
       res.json({files: files});
-    });
+    }
+    catch(err){
+      throw err;
+    }
   }
   /**
    * author完全一致検索
@@ -98,19 +116,28 @@ router.get("/", (req, res, next) => {
     const author = req.query.author; 
     const sql = "SELECT * FROM ?? WHERE ?? = ?";
     const data = ['notes', 'author', author];
-    connection.query(sql, data, (error, results) => {
-      const files = deleteNoneexistFileData(results);
+    try{
+      const [results, fields] = await pool.query(sql, data);
+      const files = await deleteNoneexistFileData(results);
       res.json({files: files});
-    });
+    }
+    catch(err){
+      throw err;
+    }
   }
   /**
    * デフォルト （すべて表示）
    */
   else { 
-    connection.query("SELECT * FROM notes", (error, results) => {
-      const files = deleteNoneexistFileData(results);
+    const sql = "SELECT * FROM notes";
+    try{
+      const [results, fields] = await pool.query(sql);
+      const files = await deleteNoneexistFileData(results);
       res.json({files: files});
-    });
+    }
+    catch(err){
+      throw err;
+    }
   } 
 });
 router.post("/",
@@ -121,8 +148,10 @@ router.post("/",
     }
     next();
   } ,
+
   upload.single("file"),
-  (req, res, next) => {
+
+  async (req, res, next) => {
     if(!req.body.title || req.body.title === ""){
       res.status(400).send({error:'"Title" must not be empty.'});
       return ;
@@ -133,12 +162,15 @@ router.post("/",
     const query = "INSERT INTO notes( ?? , ?? , ?? , ??) VALUES( ? , ? , ? , ?)";
     const data = ["id","title", "comment", "author", req.file.filename, req.body.title, req.body.comment, req.user.id];
 
-    connection.query(query, data, (error, results) => {
-      if (error) throw error;
-    });
+    try{
+      await pool.query(query, data);
+    }
+    catch(err){
+      throw err;
+    }
   }
 );
-router.post("/edit", (req,res,next) => {
+router.post("/edit", async (req,res,next) => {
   if(req.user === undefined){
     res.status(400).send({error:"You must login to post file."});
     return ;
@@ -154,15 +186,16 @@ router.post("/edit", (req,res,next) => {
   const query = "UPDATE notes SET title = ? , comment = ? where id = ? AND author = ?";
   const data = [title, comment, fileId, req.user.id];
 
-  connection.query(query, data, (error, results) => {
-    if(error) {
-      res.status(400).send({error: "ファイル編集に失敗"});
-      return ;
-    }
+  try{
+    await pool.query(query,data);
     res.status(200).send({ message: "File updated successfully." });
-  });
+  }
+  catch(err){
+    res.status(400).send({error: "ファイル編集に失敗"});
+    return ;
+  }
 });
-router.delete("/", (req,res,next) => {
+router.delete("/", async (req,res,next) => {
   if(req.user === undefined){
     res.status(400).send({error:"You must login to post file."});
     return ;
@@ -175,14 +208,13 @@ router.delete("/", (req,res,next) => {
   const query = "DELETE FROM notes WHERE id = ? AND author = ?";
   const data = [req.query.fileId, req.user.id];
 
-  connection.query(query, data, (error, results) => {
-    if(error) {
-      res.status(400).send({error: "ファイル削除に失敗"});
-      return ;
-    }
-
+  try{
+    await pool.query(query, data);
     res.status(200).send({ message: "File deleted successfully." });
-  });
+  } catch (err) {
+    res.status(400).send({error: "ファイル削除に失敗"});
+    return ;
+  }
 
 });
 module.exports = router;
